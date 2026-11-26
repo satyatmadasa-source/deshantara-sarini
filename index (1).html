@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="kn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ದೇಶಾಂತರ ಗಣಕ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, almanac-like, practical
+   IDEA: a panchanga sarini card that computes itself
+   PICTURE: the sun's day-arc over the chosen town's horizon, sunrise and sunset large
+   COLOUR and TYPE: white / saffron field / indigo accent; Noto Sans Kannada
+   LAYOUT: title, live result with arc, then two converters in one column */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#15120f);--ink:light-dark(#1d1a16,#f3ece2);--mut:light-dark(#6b6157,#b5a998);
+--saf:light-dark(#c2410c,#f08a4b);--safbg:light-dark(#fff1e6,#2a1d14);--ind:light-dark(#3730a3,#a5b4fc);--line:light-dark(#e7ddd2,#3a3129);--card:light-dark(#fffaf5,#1e1915)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans Kannada",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--saf);color:#fff;padding:22px max(5vw,16px) 18px}
+header h1{margin:0;font-size:clamp(26px,5vw,36px);line-height:1.1;font-weight:800}
+header p{margin:6px 0 0;opacity:.92;font-size:15px}
+main{max-width:860px;margin:0 auto;padding:20px max(4vw,14px) 40px}
+.row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+label{display:block;font-size:14px;color:var(--mut);margin-bottom:4px}
+select,input{width:100%;font:inherit;font-size:16px;padding:10px 12px;min-height:46px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+select:focus,input:focus,button:focus{outline:3px solid var(--ind);outline-offset:1px}
+.dmy{display:grid;grid-template-columns:.8fr 1.6fr 1.1fr;gap:6px}.dmy select{padding:10px 6px}
+.custom{display:none;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}.custom.on{display:grid}
+.res{margin-top:18px;background:var(--safbg);border-radius:16px;padding:16px 18px}
+.fig{position:relative;height:150px}.fig svg{position:absolute;inset:0;width:100%;height:100%}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-top:4px}
+.big b{display:block;font-size:clamp(30px,7vw,44px);line-height:1.05;font-variant-numeric:tabular-nums}
+.big span{font-size:14px;color:var(--mut)}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.facts div{background:var(--bg);border-radius:10px;padding:8px 10px;text-align:center}
+.facts small{display:block;color:var(--mut);font-size:13px}.facts strong{font-size:19px;white-space:nowrap}
+h2{font-size:20px;margin:28px 0 6px;color:var(--saf)}
+.box{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card)}
+.box p{margin:0 0 10px;font-size:15px;color:var(--mut)}
+.in3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.out{margin-top:12px;font-size:17px}.out b{font-size:26px;color:var(--ind);white-space:nowrap}
+.note{font-size:13px;color:var(--mut);margin-top:26px;line-height:1.6}
+@media(max-width:600px){.row{grid-template-columns:1fr}.facts{grid-template-columns:1fr 1fr 1fr}.facts strong{font-size:16px}}
+</style></head><body>
+<header><h1>ದೇಶಾಂತರ ಗಣಕ</h1><p>ಪಂಚಾಂಗದ (ವಿಜಯಪುರ) ಘಟಿ‑ಪಲವನ್ನು ನಿಮ್ಮ ಊರಿಗೆ ಬದಲಿಸಿ · ನಿಮ್ಮ ಊರಿನ ಸೂರ್ಯೋದಯ‑ಸೂರ್ಯಾಸ್ತ</p></header>
+<main>
+<div class="row">
+ <div><label for="q">ಊರು (ಹುಡುಕಿ — ಕನ್ನಡ ಅಥವಾ English)</label><input id="q" type="search" placeholder="ಉದಾ: ಮಂತ್ರಾಲಯ / Mantralayam" autocomplete="off"><select id="town" aria-label="ಊರು" style="margin-top:6px"></select></div>
+ <div><label for="dd">ದಿನಾಂಕ (ದಿನ‑ತಿಂಗಳು‑ವರ್ಷ)</label><div class="dmy"><select id="dd" aria-label="ದಿನ"></select><select id="mm" aria-label="ತಿಂಗಳು"></select><select id="yy" aria-label="ವರ್ಷ"></select></div></div>
+</div>
+<div class="custom" id="cust">
+ <div><label for="lat">ಅಕ್ಷಾಂಶ (ಉತ್ತರ, ಡಿಗ್ರಿ)</label><input id="lat" type="number" step="0.01" value="15.00"></div>
+ <div><label for="lon">ರೇಖಾಂಶ (ಪೂರ್ವ, ಡಿಗ್ರಿ)</label><input id="lon" type="number" step="0.01" value="76.00"></div>
+</div>
+<section class="res" aria-live="polite">
+ <div class="fig"><svg id="arc" role="img" aria-label="ಸೂರ್ಯನ ಹಗಲಿನ ಪಥ"></svg></div>
+ <div class="big"><div><b id="sr">–</b><span>ಸೂರ್ಯೋದಯ (IST)</span></div><div><b id="ss">–</b><span>ಸೂರ್ಯಾಸ್ತ (IST)</span></div></div>
+ <div class="facts">
+  <div><small>ದಿನಮಾನ</small><strong id="dm">–</strong></div>
+  <div><small>ವಿಜಯಪುರ ಉದಯ</small><strong id="vsr">–</strong></div>
+  <div><small>ಘಟಿಗೆ ಸೇರಿಸಿ</small><strong id="corr">–</strong></div>
+ </div>
+</section>
+
+<h2>ಪಂಚಾಂಗದ ಘಟಿ‑ಪಲ → ನಿಮ್ಮ ಊರಿನ ಘಟಿ‑ಪಲ</h2>
+<div class="box"><p>ಪಂಚಾಂಗದಲ್ಲಿ ಕೊಟ್ಟಿರುವ ತಿಥಿ/ನಕ್ಷತ್ರಾದಿಗಳ ಘಟಿ‑ಪಲ ನಮೂದಿಸಿ (ಮೇಲೆ ಆರಿಸಿದ ದಿನಾಂಕದ್ದು).</p>
+ <div class="in3"><div><label for="g">ಘಟಿ</label><input id="g" type="number" min="0" max="65" value="30"></div>
+ <div><label for="p">ಪಲ</label><input id="p" type="number" min="0" max="59" value="0"></div></div>
+ <div class="out" id="o1"></div></div>
+
+<h2>IST ಸಮಯ → ನಿಮ್ಮ ಊರಿನ ಘಟಿ‑ಪಲ</h2>
+<div class="box"><p>ಪಂಚಾಂಗದ ಗಡಿಯಾರದ ಸಮಯ (IST) ಎಲ್ಲ ಊರಿಗೂ ಒಂದೇ. ಅದನ್ನು ಇಲ್ಲಿ ಹಾಕಿದರೆ ನಿಮ್ಮ ಊರಿನ ಸೂರ್ಯೋದಯದಿಂದ ಘಟಿ‑ಪಲ ಸಿಗುತ್ತದೆ. ಸೂರ್ಯೋದಯಕ್ಕಿಂತ ಮುಂಚಿನ ಸಮಯವನ್ನು ಮರುದಿನ ಬೆಳಗಿನ ಜಾವ ಎಂದು ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.</p>
+ <label for="t">ಸಮಯ (IST)</label><input id="t" type="time" value="12:00">
+ <div class="out" id="o2"></div></div>
+
+<p class="note">ಸೂರ್ಯೋದಯ: ಬಿಂಬದ ಮೇಲಂಚು, ವಕ್ರೀಭವನ ಸಹಿತ; ನಿಖರತೆ ಸುಮಾರು ±1 ನಿಮಿಷ. 1 ಘಟಿ = 24 ನಿಮಿಷ, 1 ಪಲ = 24 ಸೆಕೆಂಡು. ಆಧಾರ: ಶ್ರೀಮದುತ್ತರಾದಿಮಠದ ಪಂಚಾಂಗ (ವಿಜಯಪುರ 16.83° ಉ, 75.71° ಪೂ). ಪಟ್ಟಿಯಲ್ಲಿ 196 ಊರುಗಳಿವೆ. ಇಲ್ಲದ ಊರಿಗೆ «ಇತರ ಊರು» ಆರಿಸಿ ಅಕ್ಷಾಂಶ‑ರೇಖಾಂಶ ನಮೂದಿಸಿ (Google Maps‑ನಲ್ಲಿ ಊರಿನ ಮೇಲೆ ಒತ್ತಿದರೆ ಸಿಗುತ್ತದೆ).</p>
+</main>
+<script>
+{
+const TOWNS=[["ಬೆಂಗಳೂರು", "Bengaluru", "ಕರ್ನಾಟಕ", 12.97, 77.59], ["ಮೈಸೂರು", "Mysuru", "ಕರ್ನಾಟಕ", 12.3, 76.64], ["ಮಂಡ್ಯ", "Mandya", "ಕರ್ನಾಟಕ", 12.52, 76.9], ["ಚಾಮರಾಜನಗರ", "Chamarajanagar", "ಕರ್ನಾಟಕ", 11.93, 76.94], ["ಹಾಸನ", "Hassan", "ಕರ್ನಾಟಕ", 13.0, 76.1], ["ಚಿಕ್ಕಮಗಳೂರು", "Chikkamagaluru", "ಕರ್ನಾಟಕ", 13.32, 75.77], ["ಶಿವಮೊಗ್ಗ", "Shivamogga", "ಕರ್ನಾಟಕ", 13.93, 75.57], ["ದಾವಣಗೆರೆ", "Davanagere", "ಕರ್ನಾಟಕ", 14.46, 75.92], ["ಚಿತ್ರದುರ್ಗ", "Chitradurga", "ಕರ್ನಾಟಕ", 14.23, 76.4], ["ತುಮಕೂರು", "Tumakuru", "ಕರ್ನಾಟಕ", 13.34, 77.1], ["ಕೋಲಾರ", "Kolar", "ಕರ್ನಾಟಕ", 13.14, 78.13], ["ಚಿಕ್ಕಬಳ್ಳಾಪುರ", "Chikkaballapur", "ಕರ್ನಾಟಕ", 13.43, 77.73], ["ರಾಮನಗರ", "Ramanagara", "ಕರ್ನಾಟಕ", 12.72, 77.28], ["ಮಂಗಳೂರು", "Mangaluru", "ಕರ್ನಾಟಕ", 12.87, 74.84], ["ಉಡುಪಿ", "Udupi", "ಕರ್ನಾಟಕ", 13.34, 74.75], ["ಮಡಿಕೇರಿ", "Madikeri", "ಕರ್ನಾಟಕ", 12.42, 75.74], ["ಕಾರವಾರ", "Karwar", "ಕರ್ನಾಟಕ", 14.81, 74.13], ["ಸಿರಸಿ", "Sirsi", "ಕರ್ನಾಟಕ", 14.62, 74.84], ["ಹಾವೇರಿ", "Haveri", "ಕರ್ನಾಟಕ", 14.79, 75.4], ["ಗದಗ", "Gadag", "ಕರ್ನಾಟಕ", 15.43, 75.63], ["ಕೊಪ್ಪಳ", "Koppal", "ಕರ್ನಾಟಕ", 15.35, 76.15], ["ಹೊಸಪೇಟೆ", "Hosapete", "ಕರ್ನಾಟಕ", 15.27, 76.39], ["ಬಳ್ಳಾರಿ", "Ballari", "ಕರ್ನಾಟಕ", 15.14, 76.92], ["ರಾಯಚೂರು", "Raichur", "ಕರ್ನಾಟಕ", 16.21, 77.36], ["ಕಲಬುರಗಿ", "Kalaburagi Gulbarga", "ಕರ್ನಾಟಕ", 17.33, 76.83], ["ಬೀದರ", "Bidar", "ಕರ್ನಾಟಕ", 17.91, 77.52], ["ಯಾದಗಿರಿ", "Yadgir", "ಕರ್ನಾಟಕ", 16.77, 77.14], ["ವಿಜಯಪುರ", "Vijayapura Bijapur", "ಕರ್ನಾಟಕ", 16.83, 75.71], ["ಬಾಗಲಕೋಟ", "Bagalkot", "ಕರ್ನಾಟಕ", 16.18, 75.7], ["ಬೆಳಗಾವಿ", "Belagavi Belgaum", "ಕರ್ನಾಟಕ", 15.85, 74.5], ["ಧಾರವಾಡ", "Dharwad", "ಕರ್ನಾಟಕ", 15.46, 75.01], ["ಹುಬ್ಬಳ್ಳಿ", "Hubballi Hubli", "ಕರ್ನಾಟಕ", 15.36, 75.12], ["ಗೋಕಾಕ", "Gokak", "ಕರ್ನಾಟಕ", 16.17, 74.83], ["ಜಮಖಂಡಿ", "Jamkhandi", "ಕರ್ನಾಟಕ", 16.5, 75.29], ["ಮುಧೋಳ", "Mudhol", "ಕರ್ನಾಟಕ", 16.34, 75.28], ["ಬಾದಾಮಿ", "Badami", "ಕರ್ನಾಟಕ", 15.92, 75.68], ["ಕಿತ್ತೂರು", "Kittur", "ಕರ್ನಾಟಕ", 15.6, 74.81], ["ನಿಪ್ಪಾಣಿ", "Nippani", "ಕರ್ನಾಟಕ", 16.4, 74.38], ["ರಾಮದುರ್ಗ", "Ramdurg", "ಕರ್ನಾಟಕ", 15.95, 75.3], ["ಲಕ್ಷ್ಮೇಶ್ವರ", "Lakshmeshwar", "ಕರ್ನಾಟಕ", 15.13, 75.47], ["ಸವಣೂರು", "Savanur", "ಕರ್ನಾಟಕ", 14.97, 75.33], ["ಸುರಪುರ", "Surpur Shorapur", "ಕರ್ನಾಟಕ", 16.52, 76.76], ["ಹರಿಹರ", "Harihar", "ಕರ್ನಾಟಕ", 14.51, 75.8], ["ಮಳಖೇಡ", "Malkhed", "ಕರ್ನಾಟಕ", 17.2, 77.16], ["ಗಾಣಗಾಪುರ", "Ganagapur", "ಕರ್ನಾಟಕ", 17.18, 76.7], ["ಆನೆಗೊಂದಿ (ನವವೃಂದಾವನ)", "Anegundi Navavrundavana Hampi", "ಕರ್ನಾಟಕ", 15.35, 76.48], ["ಶೃಂಗೇರಿ", "Sringeri", "ಕರ್ನಾಟಕ", 13.42, 75.25], ["ಧರ್ಮಸ್ಥಳ", "Dharmasthala", "ಕರ್ನಾಟಕ", 12.95, 75.38], ["ಕುಕ್ಕೆ ಸುಬ್ರಹ್ಮಣ್ಯ", "Kukke Subramanya", "ಕರ್ನಾಟಕ", 12.66, 75.61], ["ಗೋಕರ್ಣ", "Gokarna", "ಕರ್ನಾಟಕ", 14.55, 74.32], ["ಹೊರನಾಡು", "Horanadu", "ಕರ್ನಾಟಕ", 13.25, 75.34], ["ಕೊಲ್ಲೂರು", "Kollur", "ಕರ್ನಾಟಕ", 13.86, 74.81], ["ಮೇಲುಕೋಟೆ", "Melukote", "ಕರ್ನಾಟಕ", 12.66, 76.65], ["ಶ್ರೀರಂಗಪಟ್ಟಣ", "Srirangapatna", "ಕರ್ನಾಟಕ", 12.42, 76.69], ["ಗಂಗಾವತಿ", "Gangavati", "ಕರ್ನಾಟಕ", 15.43, 76.53], ["ಸಿಂಧನೂರು", "Sindhanur", "ಕರ್ನಾಟಕ", 15.77, 76.76], ["ಲಿಂಗಸುಗೂರು", "Lingasugur", "ಕರ್ನಾಟಕ", 16.16, 76.52], ["ಇಳಕಲ್", "Ilkal", "ಕರ್ನಾಟಕ", 15.96, 76.11], ["ಮುದ್ದೇಬಿಹಾಳ", "Muddebihal", "ಕರ್ನಾಟಕ", 16.34, 76.13], ["ಇಂಡಿ", "Indi", "ಕರ್ನಾಟಕ", 17.17, 75.96], ["ಸಿಂದಗಿ", "Sindagi", "ಕರ್ನಾಟಕ", 16.92, 76.23], ["ಬಸವನಬಾಗೇವಾಡಿ", "Basavana Bagewadi", "ಕರ್ನಾಟಕ", 16.57, 75.97], ["ತಾಳಿಕೋಟೆ", "Talikote", "ಕರ್ನಾಟಕ", 16.47, 76.31], ["ಶಹಾಪುರ", "Shahapur", "ಕರ್ನಾಟಕ", 16.7, 76.84], ["ಸೇಡಂ", "Sedam", "ಕರ್ನಾಟಕ", 17.18, 77.28], ["ಅಥಣಿ", "Athani", "ಕರ್ನಾಟಕ", 16.73, 75.06], ["ಚಿಕ್ಕೋಡಿ", "Chikkodi", "ಕರ್ನಾಟಕ", 16.43, 74.6], ["ಸವದತ್ತಿ", "Savadatti", "ಕರ್ನಾಟಕ", 15.76, 75.12], ["ರಾಣೇಬೆನ್ನೂರು", "Ranebennur", "ಕರ್ನಾಟಕ", 14.62, 75.62], ["ಭದ್ರಾವತಿ", "Bhadravati", "ಕರ್ನಾಟಕ", 13.84, 75.7], ["ತೀರ್ಥಹಳ್ಳಿ", "Thirthahalli", "ಕರ್ನಾಟಕ", 13.69, 75.24], ["ಸಾಗರ (ಕರ್ನಾಟಕ)", "Sagara Karnataka", "ಕರ್ನಾಟಕ", 14.17, 75.03], ["ಕುಂದಾಪುರ", "Kundapura", "ಕರ್ನಾಟಕ", 13.63, 74.69], ["ಪುತ್ತೂರು", "Puttur", "ಕರ್ನಾಟಕ", 12.76, 75.2], ["ಮುಂಬಯಿ", "Mumbai", "ಮಹಾರಾಷ್ಟ್ರ", 18.97, 72.83], ["ಥಾಣೆ", "Thane", "ಮಹಾರಾಷ್ಟ್ರ", 19.22, 72.98], ["ಕಲ್ಯಾಣ", "Kalyan", "ಮಹಾರಾಷ್ಟ್ರ", 19.24, 73.13], ["ಪುಣೆ", "Pune", "ಮಹಾರಾಷ್ಟ್ರ", 18.52, 73.86], ["ನಾಸಿಕ", "Nashik", "ಮಹಾರಾಷ್ಟ್ರ", 20.0, 73.79], ["ನಾಗಪುರ", "Nagpur", "ಮಹಾರಾಷ್ಟ್ರ", 21.15, 79.09], ["ಛತ್ರಪತಿ ಸಂಭಾಜಿನಗರ (ಔರಂಗಾಬಾದ್)", "Aurangabad Sambhajinagar", "ಮಹಾರಾಷ್ಟ್ರ", 19.88, 75.34], ["ನಾಂದೇಡ", "Nanded", "ಮಹಾರಾಷ್ಟ್ರ", 19.15, 77.31], ["ಲಾತೂರ", "Latur", "ಮಹಾರಾಷ್ಟ್ರ", 18.4, 76.56], ["ಧಾರಾಶಿವ (ಉಸ್ಮಾನಾಬಾದ್)", "Osmanabad Dharashiv", "ಮಹಾರಾಷ್ಟ್ರ", 18.19, 76.04], ["ತುಳಜಾಪುರ", "Tuljapur", "ಮಹಾರಾಷ್ಟ್ರ", 18.01, 76.07], ["ಅಹಮದ್‌ನಗರ", "Ahmednagar Ahilyanagar", "ಮಹಾರಾಷ್ಟ್ರ", 19.09, 74.74], ["ಬೀಡ", "Beed", "ಮಹಾರಾಷ್ಟ್ರ", 18.99, 75.76], ["ಪರಭಣಿ", "Parbhani", "ಮಹಾರಾಷ್ಟ್ರ", 19.27, 76.77], ["ಜಲಗಾಂವ", "Jalgaon", "ಮಹಾರಾಷ್ಟ್ರ", 21.0, 75.56], ["ಅಮರಾವತಿ (ಮಹಾ.)", "Amravati", "ಮಹಾರಾಷ್ಟ್ರ", 20.93, 77.75], ["ರತ್ನಾಗಿರಿ", "Ratnagiri", "ಮಹಾರಾಷ್ಟ್ರ", 16.99, 73.31], ["ಸೊಲ್ಲಾಪುರ", "Solapur", "ಮಹಾರಾಷ್ಟ್ರ", 17.66, 75.91], ["ಅಕ್ಕಲಕೋಟ", "Akkalkot", "ಮಹಾರಾಷ್ಟ್ರ", 17.53, 76.21], ["ಪಂಢರಪುರ", "Pandharpur", "ಮಹಾರಾಷ್ಟ್ರ", 17.68, 75.33], ["ಬಾರ್ಶಿ", "Barshi", "ಮಹಾರಾಷ್ಟ್ರ", 18.23, 75.69], ["ಸಾತಾರಾ", "Satara", "ಮಹಾರಾಷ್ಟ್ರ", 17.68, 74.0], ["ಕರಾಡ", "Karad", "ಮಹಾರಾಷ್ಟ್ರ", 17.29, 74.18], ["ಸಾಂಗಲಿ", "Sangli", "ಮಹಾರಾಷ್ಟ್ರ", 16.85, 74.58], ["ಮಿರಜ", "Miraj", "ಮಹಾರಾಷ್ಟ್ರ", 16.83, 74.64], ["ತಾಸಗಾಂವ", "Tasgaon", "ಮಹಾರಾಷ್ಟ್ರ", 17.04, 74.6], ["ಜತ್ತ", "Jath", "ಮಹಾರಾಷ್ಟ್ರ", 17.05, 75.22], ["ಕೊಲ್ಹಾಪುರ", "Kolhapur", "ಮಹಾರಾಷ್ಟ್ರ", 16.7, 74.24], ["ಇಚಲಕರಂಜಿ", "Ichalkaranji", "ಮಹಾರಾಷ್ಟ್ರ", 16.69, 74.46], ["ಸಾವಂತವಾಡಿ", "Sawantwadi", "ಮಹಾರಾಷ್ಟ್ರ", 15.9, 73.82], ["ಹೈದರಾಬಾದ್", "Hyderabad", "ತೆಲಂಗಾಣ", 17.39, 78.49], ["ವರಂಗಲ್", "Warangal", "ತೆಲಂಗಾಣ", 17.97, 79.59], ["ಕರೀಂನಗರ", "Karimnagar", "ತೆಲಂಗಾಣ", 18.44, 79.13], ["ನಿಜಾಮಾಬಾದ್", "Nizamabad", "ತೆಲಂಗಾಣ", 18.67, 78.09], ["ಮಹಬೂಬ್‌ನಗರ", "Mahabubnagar", "ತೆಲಂಗಾಣ", 16.74, 78.0], ["ಖಮ್ಮಂ", "Khammam", "ತೆಲಂಗಾಣ", 17.25, 80.15], ["ಭದ್ರಾಚಲಂ", "Bhadrachalam", "ತೆಲಂಗಾಣ", 17.67, 80.89], ["ಗದ್ವಾಲ", "Gadwal", "ತೆಲಂಗಾಣ", 16.23, 77.8], ["ಮಂತ್ರಾಲಯ", "Mantralayam", "ಆಂಧ್ರಪ್ರದೇಶ", 15.94, 77.43], ["ಆದವಾನಿ", "Adoni", "ಆಂಧ್ರಪ್ರದೇಶ", 15.63, 77.28], ["ಕರ್ನೂಲ್", "Kurnool", "ಆಂಧ್ರಪ್ರದೇಶ", 15.83, 78.04], ["ಅನಂತಪುರ", "Anantapur", "ಆಂಧ್ರಪ್ರದೇಶ", 14.68, 77.6], ["ಗುಂತಕಲ್", "Guntakal", "ಆಂಧ್ರಪ್ರದೇಶ", 15.17, 77.37], ["ಹಿಂದೂಪುರ", "Hindupur", "ಆಂಧ್ರಪ್ರದೇಶ", 13.83, 77.49], ["ತಾಡಪತ್ರಿ", "Tadipatri", "ಆಂಧ್ರಪ್ರದೇಶ", 14.91, 78.01], ["ಕಡಪ", "Kadapa", "ಆಂಧ್ರಪ್ರದೇಶ", 14.47, 78.82], ["ತಿರುಪತಿ", "Tirupati", "ಆಂಧ್ರಪ್ರದೇಶ", 13.63, 79.42], ["ಶ್ರೀಶೈಲ", "Srisailam", "ಆಂಧ್ರಪ್ರದೇಶ", 16.07, 78.87], ["ಅಹೋಬಿಲ", "Ahobilam", "ಆಂಧ್ರಪ್ರದೇಶ", 15.13, 78.73], ["ನೆಲ್ಲೂರು", "Nellore", "ಆಂಧ್ರಪ್ರದೇಶ", 14.44, 79.99], ["ಓಂಗೋಲ್", "Ongole", "ಆಂಧ್ರಪ್ರದೇಶ", 15.5, 80.05], ["ಗುಂಟೂರು", "Guntur", "ಆಂಧ್ರಪ್ರದೇಶ", 16.31, 80.44], ["ವಿಜಯವಾಡ", "Vijayawada", "ಆಂಧ್ರಪ್ರದೇಶ", 16.51, 80.65], ["ಮಚಲೀಪಟ್ಟಣ", "Machilipatnam", "ಆಂಧ್ರಪ್ರದೇಶ", 16.19, 81.14], ["ಏಲೂರು", "Eluru", "ಆಂಧ್ರಪ್ರದೇಶ", 16.71, 81.1], ["ರಾಜಮಹೇಂದ್ರಿ", "Rajahmundry", "ಆಂಧ್ರಪ್ರದೇಶ", 17.0, 81.8], ["ಕಾಕಿನಾಡ", "Kakinada", "ಆಂಧ್ರಪ್ರದೇಶ", 16.99, 82.25], ["ವಿಶಾಖಪಟ್ಟಣ", "Visakhapatnam", "ಆಂಧ್ರಪ್ರದೇಶ", 17.69, 83.22], ["ಚೆನ್ನೈ", "Chennai", "ತಮಿಳುನಾಡು", 13.08, 80.27], ["ಕಾಂಚೀಪುರಂ", "Kanchipuram", "ತಮಿಳುನಾಡು", 12.83, 79.7], ["ವೆಲ್ಲೂರು", "Vellore", "ತಮಿಳುನಾಡು", 12.92, 79.13], ["ತಿರುವಣ್ಣಾಮಲೈ", "Tiruvannamalai", "ತಮಿಳುನಾಡು", 12.23, 79.07], ["ಹೊಸೂರು", "Hosur", "ತಮಿಳುನಾಡು", 12.74, 77.83], ["ಸೇಲಂ", "Salem", "ತಮಿಳುನಾಡು", 11.66, 78.15], ["ಈರೋಡ್", "Erode", "ತಮಿಳುನಾಡು", 11.34, 77.72], ["ಕೊಯಮತ್ತೂರು", "Coimbatore", "ತಮಿಳುನಾಡು", 11.02, 76.96], ["ತಿರುಚಿನಾಪಳ್ಳಿ", "Tiruchirappalli Trichy", "ತಮಿಳುನಾಡು", 10.79, 78.7], ["ಶ್ರೀರಂಗಂ", "Srirangam", "ತಮಿಳುನಾಡು", 10.86, 78.69], ["ತಂಜಾವೂರು", "Thanjavur", "ತಮಿಳುನಾಡು", 10.79, 79.14], ["ಕುಂಭಕೋಣ", "Kumbakonam", "ತಮಿಳುನಾಡು", 10.96, 79.38], ["ಚಿದಂಬರಂ", "Chidambaram", "ತಮಿಳುನಾಡು", 11.4, 79.69], ["ಮಧುರೈ", "Madurai", "ತಮಿಳುನಾಡು", 9.93, 78.12], ["ರಾಮೇಶ್ವರ", "Rameswaram", "ತಮಿಳುನಾಡು", 9.29, 79.31], ["ತಿರುನೆಲ್ವೇಲಿ", "Tirunelveli", "ತಮಿಳುನಾಡು", 8.71, 77.76], ["ಕನ್ಯಾಕುಮಾರಿ", "Kanyakumari", "ತಮಿಳುನಾಡು", 8.08, 77.54], ["ಕಾಸರಗೋಡು", "Kasaragod", "ಕೇರಳ", 12.5, 74.99], ["ಕಣ್ಣೂರು", "Kannur", "ಕೇರಳ", 11.87, 75.37], ["ಕೋಳಿಕ್ಕೋಡ್", "Kozhikode Calicut", "ಕೇರಳ", 11.26, 75.78], ["ಪಾಲಕ್ಕಾಡ್", "Palakkad", "ಕೇರಳ", 10.79, 76.65], ["ಗುರುವಾಯೂರು", "Guruvayur", "ಕೇರಳ", 10.59, 76.04], ["ತ್ರಿಶ್ಶೂರ್", "Thrissur", "ಕೇರಳ", 10.53, 76.21], ["ಕೊಚ್ಚಿ", "Kochi Cochin", "ಕೇರಳ", 9.93, 76.27], ["ತಿರುವನಂತಪುರ", "Thiruvananthapuram Trivandrum", "ಕೇರಳ", 8.52, 76.94], ["ಪಣಜಿ", "Panaji", "ಗೋವಾ", 15.49, 73.83], ["ಮಡಗಾಂವ", "Margao", "ಗೋವಾ", 15.27, 73.96], ["ಅಹಮದಾಬಾದ್", "Ahmedabad", "ಗುಜರಾತ್", 23.02, 72.57], ["ವಡೋದರಾ", "Vadodara Baroda", "ಗುಜರಾತ್", 22.31, 73.18], ["ಸೂರತ್", "Surat", "ಗುಜರಾತ್", 21.17, 72.83], ["ರಾಜಕೋಟ", "Rajkot", "ಗುಜರಾತ್", 22.3, 70.8], ["ದ್ವಾರಕಾ", "Dwarka", "ಗುಜರಾತ್", 22.24, 68.97], ["ಸೋಮನಾಥ", "Somnath", "ಗುಜರಾತ್", 20.89, 70.4], ["ಭೋಪಾಲ್", "Bhopal", "ಮಧ್ಯಪ್ರದೇಶ", 23.26, 77.41], ["ಇಂದೋರ್", "Indore", "ಮಧ್ಯಪ್ರದೇಶ", 22.72, 75.86], ["ಉಜ್ಜಯಿನಿ", "Ujjain", "ಮಧ್ಯಪ್ರದೇಶ", 23.18, 75.78], ["ಜಬಲಪುರ", "Jabalpur", "ಮಧ್ಯಪ್ರದೇಶ", 23.18, 79.95], ["ಗ್ವಾಲಿಯರ್", "Gwalior", "ಮಧ್ಯಪ್ರದೇಶ", 26.22, 78.18], ["ಸಾಗರ (ಮ.ಪ್ರ.)", "Sagar MP", "ಮಧ್ಯಪ್ರದೇಶ", 23.84, 78.74], ["ದೆಹಲಿ", "Delhi", "ಉತ್ತರ ಭಾರತ", 28.61, 77.21], ["ಮಥುರಾ", "Mathura", "ಉತ್ತರ ಭಾರತ", 27.49, 77.67], ["ವೃಂದಾವನ", "Vrindavan", "ಉತ್ತರ ಭಾರತ", 27.58, 77.7], ["ಆಗ್ರಾ", "Agra", "ಉತ್ತರ ಭಾರತ", 27.18, 78.01], ["ಅಯೋಧ್ಯೆ", "Ayodhya", "ಉತ್ತರ ಭಾರತ", 26.8, 82.2], ["ಲಖನೌ", "Lucknow", "ಉತ್ತರ ಭಾರತ", 26.85, 80.95], ["ನೈಮಿಷಾರಣ್ಯ", "Naimisharanya", "ಉತ್ತರ ಭಾರತ", 27.35, 80.49], ["ಕಾನ್ಪುರ", "Kanpur", "ಉತ್ತರ ಭಾರತ", 26.45, 80.33], ["ಪ್ರಯಾಗ", "Prayagraj Allahabad", "ಉತ್ತರ ಭಾರತ", 25.44, 81.85], ["ಕಾಶೀ", "Kashi Varanasi", "ಉತ್ತರ ಭಾರತ", 25.32, 83.0], ["ಹರಿದ್ವಾರ", "Haridwar", "ಉತ್ತರ ಭಾರತ", 29.95, 78.16], ["ಋಷಿಕೇಶ", "Rishikesh", "ಉತ್ತರ ಭಾರತ", 30.09, 78.27], ["ಬದರೀನಾಥ", "Badrinath", "ಉತ್ತರ ಭಾರತ", 30.74, 79.49], ["ಜೈಪುರ", "Jaipur", "ಉತ್ತರ ಭಾರತ", 26.91, 75.79], ["ಪುಷ್ಕರ", "Pushkar", "ಉತ್ತರ ಭಾರತ", 26.49, 74.55], ["ಚಂಡೀಗಢ", "Chandigarh", "ಉತ್ತರ ಭಾರತ", 30.73, 76.78], ["ಶ್ರೀನಗರ", "Srinagar", "ಉತ್ತರ ಭಾರತ", 34.08, 74.8], ["ಗಯಾ", "Gaya", "ಪೂರ್ವ ಭಾರತ", 24.79, 85.0], ["ಪಟ್ನಾ", "Patna", "ಪೂರ್ವ ಭಾರತ", 25.59, 85.14], ["ರಾಂಚಿ", "Ranchi", "ಪೂರ್ವ ಭಾರತ", 23.34, 85.31], ["ರಾಯಪುರ", "Raipur", "ಪೂರ್ವ ಭಾರತ", 21.25, 81.63], ["ಪುರಿ", "Puri", "ಪೂರ್ವ ಭಾರತ", 19.81, 85.83], ["ಭುವನೇಶ್ವರ", "Bhubaneswar", "ಪೂರ್ವ ಭಾರತ", 20.3, 85.82], ["ಕೋಲ್ಕತಾ", "Kolkata Calcutta", "ಪೂರ್ವ ಭಾರತ", 22.57, 88.36], ["ಗುವಾಹಾಟಿ", "Guwahati", "ಪೂರ್ವ ಭಾರತ", 26.14, 91.74]];
+const V=[16.83,75.71];
+const R=Math.PI/180,$=id=>document.getElementById(id);
+function sun(y,m,d,lat,lon,rise){let t=12,tm=0;
+ for(let k=0;k<5;k++){const jd=(Date.UTC(y,m-1,d)-Date.UTC(2000,0,1,12))/864e5+(t-5.5)/24,T=jd/36525;
+  const L0=((280.46646+36000.76983*T)%360+360)%360,M=357.52911+35999.05029*T,e=0.016708634;
+  const C=1.914602*Math.sin(M*R)+0.019993*Math.sin(2*M*R),lam=L0+C-0.00569,eps=23.4393;
+  const dec=Math.asin(Math.sin(eps*R)*Math.sin(lam*R)),y2=Math.tan(eps/2*R)**2;
+  const Et=4/R*(y2*Math.sin(2*L0*R)-2*e*Math.sin(M*R)+4*e*y2*Math.sin(M*R)*Math.cos(2*L0*R));
+  const cosH=(Math.sin(-0.8333*R)-Math.sin(lat*R)*Math.sin(dec))/(Math.cos(lat*R)*Math.cos(dec));
+  const H=Math.acos(Math.max(-1,Math.min(1,cosH)))/R,noon=720-4*lon-Et+330;
+  tm=rise?noon-4*H:noon+4*H;t=tm/60}
+ return tm}
+const hm=m=>{m=Math.round(m);const h=Math.floor(m/60)%24,mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0')};
+const gp=pal=>{pal=Math.round(pal);const s=pal<0?'−':'';pal=Math.abs(pal);return s+Math.floor(pal/60)+'‑'+String(pal%60).padStart(2,'0')};
+const sel=$('town');
+const STATES=[...new Set(TOWNS.map(t=>t[2]))];
+function fill(q){q=(q||'').trim().toLowerCase();const cur=sel.value;let html='',n=0;
+ for(const st of STATES){const ops=TOWNS.map((t,i)=>[t,i]).filter(([t])=>t[2]===st&&(!q||t[0].toLowerCase().includes(q)||t[1].toLowerCase().includes(q)))
+  .sort((a,b)=>a[0][0].localeCompare(b[0][0],'kn')).map(([t,i])=>`<option value="${i}">${t[0]}</option>`);
+  n+=ops.length;if(ops.length)html+=`<optgroup label="${st}">${ops.join('')}</optgroup>`}
+ sel.innerHTML=(n?'':'<option value="" disabled>ಸಿಗಲಿಲ್ಲ — «ಇತರ ಊರು» ಆರಿಸಿ</option>')+html+'<option value="x">ಇತರ ಊರು (ಅಕ್ಷಾಂಶ‑ರೇಖಾಂಶ)…</option>';
+ if(sel.querySelector(`option[value="${cur}"]`))sel.value=cur;else{const f=sel.querySelector('option[value]:not([disabled])');if(f)sel.value=f.value}}
+let saved=null;try{saved=localStorage.getItem('desh-town2')}catch(e){}
+fill('');const si=TOWNS.findIndex(t=>t[0]===saved),bi=TOWNS.findIndex(t=>t[0]==='ಬೆಂಗಳೂರು');sel.value=saved==='x'?'x':String(si>=0?si:bi);
+const MN=['ಜನವರಿ','ಫೆಬ್ರವರಿ','ಮಾರ್ಚ್','ಏಪ್ರಿಲ್','ಮೇ','ಜೂನ್','ಜುಲೈ','ಆಗಸ್ಟ್','ಸೆಪ್ಟೆಂಬರ್','ಅಕ್ಟೋಬರ್','ನವೆಂಬರ್','ಡಿಸೆಂಬರ್'];
+$('dd').innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${String(i+1).padStart(2,'0')}</option>`).join('');
+$('mm').innerHTML=MN.map((n,i)=>`<option value="${i+1}">${String(i+1).padStart(2,'0')} ${n}</option>`).join('');
+$('yy').innerHTML=Array.from({length:17},(_,i)=>`<option value="${2020+i}">${2020+i}</option>`).join('');
+const now=new Date(Date.now()+5.5*36e5);$('dd').value=now.getUTCDate();$('mm').value=now.getUTCMonth()+1;$('yy').value=Math.min(2036,Math.max(2020,now.getUTCFullYear()));
+function getDate(){let y=+$('yy').value,m=+$('mm').value,d=+$('dd').value;const ml=new Date(Date.UTC(y,m,0)).getUTCDate();if(d>ml){d=ml;$('dd').value=d}return[y,m,d]}
+let st={};
+function place(){if(sel.value==='x'||sel.value==='')return[+$('lat').value||0,+$('lon').value||0,'ಇತರ ಊರು'];const t=TOWNS[+sel.value];return[t[3],t[4],t[0]]}
+function calc(){
+ $('cust').classList.toggle('on',sel.value==='x');try{localStorage.setItem('desh-town2',sel.value==='x'?'x':(TOWNS[+sel.value]||[''])[0])}catch(e){}
+ const [y,m,d]=getDate(),[la,lo,name]=place();
+ const sr=sun(y,m,d,la,lo,true),ss=sun(y,m,d,la,lo,false),vsr=sun(y,m,d,V[0],V[1],true);
+ st={sr,ss,vsr,name};
+ $('sr').textContent=hm(sr);$('ss').textContent=hm(ss);$('vsr').textContent=hm(vsr);
+ $('dm').textContent=gp((ss-sr)*2.5)+' ಘ';
+ const c=Math.round((vsr-sr)*2.5);$('corr').textContent=(c>=0?'+':'−')+Math.abs(c)+' ಪಲ';
+ draw();conv()}
+function conv(){
+ const pal=(+$('g').value||0)*60+(+$('p').value||0),c=(st.vsr-st.sr)*2.5,loc=pal+c,ist=st.vsr+pal/2.5;
+ $('o1').innerHTML=`${st.name}: <b>${gp(loc)}</b> ಘಟಿ‑ಪಲ <span style="color:var(--mut);font-size:15px">(IST ${hm(ist)})</span>`;
+ const [h,mi]=($('t').value||'12:00').split(':').map(Number);let tm=h*60+mi;if(tm<st.sr)tm+=1440;
+ $('o2').innerHTML=`${st.name}: <b>${gp((tm-st.sr)*2.5)}</b> ಘಟಿ‑ಪಲ <span style="color:var(--mut);font-size:15px">· ವಿಜಯಪುರ ${gp((tm-st.vsr)*2.5)}</span>`}
+const svg=$('arc');
+function draw(){if(!st.sr)return;const W=svg.clientWidth,H=svg.clientHeight,b=H-26,x0=W*.1,x1=W*.9,top=14;
+ const now=new Date(Date.now()+5.5*36e5),nm=now.getUTCHours()*60+now.getUTCMinutes(),g0=getDate(),today=now.getUTCFullYear()===g0[0]&&now.getUTCMonth()+1===g0[1]&&now.getUTCDate()===g0[2];
+ const f=t=>{const u=(t-st.sr)/(st.ss-st.sr);return[x0+(x1-x0)*u,b-(b-top)*Math.sin(Math.PI*u)]};
+ let path='';for(let i=0;i<=40;i++){const[x,y]=f(st.sr+(st.ss-st.sr)*i/40);path+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)}
+ let sunp=f((st.sr+st.ss)/2);if(today&&nm>st.sr&&nm<st.ss)sunp=f(nm);
+ svg.innerHTML=`<line x1="0" x2="${W}" y1="${b}" y2="${b}" stroke="var(--saf)" stroke-width="2"/>
+ <path d="${path}" fill="none" stroke="var(--saf)" stroke-width="2" stroke-dasharray="5 6" opacity=".7"/>
+ <circle cx="${sunp[0]}" cy="${sunp[1]}" r="13" fill="var(--saf)"/><circle cx="${sunp[0]}" cy="${sunp[1]}" r="20" fill="var(--saf)" opacity=".18"/>
+ <circle cx="${x0}" cy="${b}" r="5" fill="var(--ind)"/><circle cx="${x1}" cy="${b}" r="5" fill="var(--ind)"/>
+ <text x="${x0}" y="${b+20}" text-anchor="middle" font-size="13" fill="var(--mut)">ಪೂರ್ವ</text><text x="${x1}" y="${b+20}" text-anchor="middle" font-size="13" fill="var(--mut)">ಪಶ್ಚಿಮ</text>`}
+const ro=new ResizeObserver(draw);ro.observe(svg);
+['town','dd','mm','yy','lat','lon'].forEach(i=>$(i).addEventListener('input',calc));$('town').addEventListener('change',calc);
+$('q').addEventListener('input',()=>{fill($('q').value);calc()});
+['g','p','t'].forEach(i=>$(i).addEventListener('input',conv));
+calc();
+}
+</script></body></html>
