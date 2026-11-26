@@ -23,6 +23,9 @@ label{display:block;font-size:14px;color:var(--mut);margin-bottom:4px}
 select,input{width:100%;font:inherit;font-size:16px;padding:10px 12px;min-height:46px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
 select:focus,input:focus,button:focus{outline:3px solid var(--ind);outline-offset:1px}
 .dmy{display:grid;grid-template-columns:.8fr 1.6fr 1.1fr;gap:6px}.dmy select{padding:10px 6px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+#gps{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:15px;font-weight:600;min-height:46px;padding:0 14px;border-radius:10px;border:0;background:var(--ind);color:#fff;cursor:pointer;white-space:nowrap}
+#gps[disabled]{opacity:.6}.gmsg{font-size:14px;color:var(--ind);min-height:0;margin-top:4px}.gmsg:empty{display:none}
 .custom{display:none;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}.custom.on{display:grid}
 .res{margin-top:18px;background:var(--safbg);border-radius:16px;padding:16px 18px}
 .fig{position:relative;height:150px}.fig svg{position:absolute;inset:0;width:100%;height:100%}
@@ -43,7 +46,7 @@ h2{font-size:20px;margin:28px 0 6px;color:var(--saf)}
 <header><h1>ದೇಶಾಂತರ ಗಣಕ</h1><p>ಪಂಚಾಂಗದ (ವಿಜಯಪುರ) ಘಟಿ‑ಪಲವನ್ನು ನಿಮ್ಮ ಊರಿಗೆ ಬದಲಿಸಿ · ನಿಮ್ಮ ಊರಿನ ಸೂರ್ಯೋದಯ‑ಸೂರ್ಯಾಸ್ತ</p></header>
 <main>
 <div class="row">
- <div><label for="q">ಊರು (ಹುಡುಕಿ — ಕನ್ನಡ ಅಥವಾ English)</label><input id="q" type="search" placeholder="ಉದಾ: ಮಂತ್ರಾಲಯ / Mantralayam" autocomplete="off"><select id="town" aria-label="ಊರು" style="margin-top:6px"></select></div>
+ <div><label for="q">ಊರು (ಹುಡುಕಿ — ಕನ್ನಡ ಅಥವಾ English)</label><div class="qrow"><input id="q" type="search" placeholder="ಉದಾ: ಮಂತ್ರಾಲಯ / Mantralayam" autocomplete="off"><button id="gps" type="button"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>ನನ್ನ ಸ್ಥಳ</button></div><div id="gmsg" class="gmsg"></div><select id="town" aria-label="ಊರು" style="margin-top:6px"></select></div>
  <div><label for="dd">ದಿನಾಂಕ (ದಿನ‑ತಿಂಗಳು‑ವರ್ಷ)</label><div class="dmy"><select id="dd" aria-label="ದಿನ"></select><select id="mm" aria-label="ತಿಂಗಳು"></select><select id="yy" aria-label="ವರ್ಷ"></select></div></div>
 </div>
 <div class="custom" id="cust">
@@ -71,7 +74,7 @@ h2{font-size:20px;margin:28px 0 6px;color:var(--saf)}
  <label for="t">ಸಮಯ (IST)</label><input id="t" type="time" value="12:00">
  <div class="out" id="o2"></div></div>
 
-<p class="note">ಸೂರ್ಯೋದಯ: ಬಿಂಬದ ಮೇಲಂಚು, ವಕ್ರೀಭವನ ಸಹಿತ; ನಿಖರತೆ ಸುಮಾರು ±1 ನಿಮಿಷ. 1 ಘಟಿ = 24 ನಿಮಿಷ, 1 ಪಲ = 24 ಸೆಕೆಂಡು. ಆಧಾರ: ಶ್ರೀಮದುತ್ತರಾದಿಮಠದ ಪಂಚಾಂಗ (ವಿಜಯಪುರ 16.83° ಉ, 75.71° ಪೂ). ಪಟ್ಟಿಯಲ್ಲಿ 196 ಊರುಗಳಿವೆ. ಇಲ್ಲದ ಊರಿಗೆ «ಇತರ ಊರು» ಆರಿಸಿ ಅಕ್ಷಾಂಶ‑ರೇಖಾಂಶ ನಮೂದಿಸಿ (Google Maps‑ನಲ್ಲಿ ಊರಿನ ಮೇಲೆ ಒತ್ತಿದರೆ ಸಿಗುತ್ತದೆ).</p>
+<p class="note">ಸೂರ್ಯೋದಯ: ಬಿಂಬದ ಮೇಲಂಚು, ವಕ್ರೀಭವನ ಸಹಿತ; ನಿಖರತೆ ಸುಮಾರು ±1 ನಿಮಿಷ. 1 ಘಟಿ = 24 ನಿಮಿಷ, 1 ಪಲ = 24 ಸೆಕೆಂಡು. ಆಧಾರ: ಶ್ರೀಮದುತ್ತರಾದಿಮಠದ ಪಂಚಾಂಗ (ವಿಜಯಪುರ 16.83° ಉ, 75.71° ಪೂ). ಪಟ್ಟಿಯಲ್ಲಿ 196 ಊರುಗಳಿವೆ. ಇಲ್ಲದ ಊರಿಗೆ «ನನ್ನ ಸ್ಥಳ» (GPS) ಒತ್ತಿ, ಅಥವಾ «ಇತರ ಊರು» ಆರಿಸಿ ಅಕ್ಷಾಂಶ‑ರೇಖಾಂಶ ನಮೂದಿಸಿ (Google Maps‑ನಲ್ಲಿ ಊರಿನ ಮೇಲೆ ಒತ್ತಿದರೆ ಸಿಗುತ್ತದೆ).</p>
 </main>
 <script>
 {
@@ -107,7 +110,8 @@ $('yy').innerHTML=Array.from({length:17},(_,i)=>`<option value="${2020+i}">${202
 const now=new Date(Date.now()+5.5*36e5);$('dd').value=now.getUTCDate();$('mm').value=now.getUTCMonth()+1;$('yy').value=Math.min(2036,Math.max(2020,now.getUTCFullYear()));
 function getDate(){let y=+$('yy').value,m=+$('mm').value,d=+$('dd').value;const ml=new Date(Date.UTC(y,m,0)).getUTCDate();if(d>ml){d=ml;$('dd').value=d}return[y,m,d]}
 let st={};
-function place(){if(sel.value==='x'||sel.value==='')return[+$('lat').value||0,+$('lon').value||0,'ಇತರ ಊರು'];const t=TOWNS[+sel.value];return[t[3],t[4],t[0]]}
+let gpsName='';
+function place(){if(sel.value==='x'||sel.value==='')return[+$('lat').value||0,+$('lon').value||0,gpsName||'ಇತರ ಊರು'];const t=TOWNS[+sel.value];return[t[3],t[4],t[0]]}
 function calc(){
  $('cust').classList.toggle('on',sel.value==='x');try{localStorage.setItem('desh-town2',sel.value==='x'?'x':(TOWNS[+sel.value]||[''])[0])}catch(e){}
  const [y,m,d]=getDate(),[la,lo,name]=place();
@@ -137,6 +141,24 @@ const ro=new ResizeObserver(draw);ro.observe(svg);
 ['town','dd','mm','yy','lat','lon'].forEach(i=>$(i).addEventListener('input',calc));$('town').addEventListener('change',calc);
 $('q').addEventListener('input',()=>{fill($('q').value);calc()});
 ['g','p','t'].forEach(i=>$(i).addEventListener('input',conv));
+
+function near(la,lo){let b=null,bd=1e9;for(const t of TOWNS){const dl=(t[3]-la)*111,dn=(t[4]-lo)*111*Math.cos(la*R),d=Math.hypot(dl,dn);if(d<bd){bd=d;b=t}}return[b,bd]}
+$('gps').addEventListener('click',()=>{
+ const m=$('gmsg');
+ if(!navigator.geolocation){m.textContent='ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ GPS ಸೌಲಭ್ಯ ಇಲ್ಲ. ಊರನ್ನು ಪಟ್ಟಿಯಿಂದ ಆರಿಸಿ.';return}
+ $('gps').disabled=true;m.textContent='ನಿಮ್ಮ ಸ್ಥಳ ಪಡೆಯುತ್ತಿದೆ… (ಅನುಮತಿ ಕೇಳಿದರೆ «Allow» ಒತ್ತಿ)';
+ navigator.geolocation.getCurrentPosition(p=>{
+  $('gps').disabled=false;const la=p.coords.latitude,lo=p.coords.longitude,[t,d]=near(la,lo);
+  $('lat').value=la.toFixed(3);$('lon').value=lo.toFixed(3);$('q').value='';fill('');sel.value='x';
+  gpsName=d<15?'ನನ್ನ ಸ್ಥಳ ('+t[0]+')':'ನನ್ನ ಸ್ಥಳ (ಹತ್ತಿರ: '+t[0]+', '+Math.round(d)+' ಕಿ.ಮೀ.)';
+  m.textContent=gpsName+' · '+la.toFixed(3)+'° ಉ, '+lo.toFixed(3)+'° ಪೂ';
+  try{localStorage.setItem('desh-gps',JSON.stringify([la,lo,gpsName]))}catch(e){}
+  calc()},e=>{$('gps').disabled=false;
+  m.textContent=e.code===1?'ಸ್ಥಳದ ಅನುಮತಿ ಸಿಗಲಿಲ್ಲ. ಫೋನ್‌ನ Settings‑ನಲ್ಲಿ Location ಆನ್ ಮಾಡಿ, ಈ ಪುಟಕ್ಕೆ ಅನುಮತಿ ಕೊಡಿ; ಇಲ್ಲವೇ ಊರನ್ನು ಪಟ್ಟಿಯಿಂದ ಆರಿಸಿ.':'ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ. ಸ್ವಲ್ಪ ಹೊತ್ತಿನ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ, ಇಲ್ಲವೇ ಊರನ್ನು ಪಟ್ಟಿಯಿಂದ ಆರಿಸಿ.'},
+  {enableHighAccuracy:false,timeout:15000,maximumAge:600000})});
+['lat','lon'].forEach(i=>$(i).addEventListener('input',()=>{gpsName='';$('gmsg').textContent=''}));
+sel.addEventListener('change',()=>{if(sel.value!=='x'){gpsName='';$('gmsg').textContent=''}});
+try{const g=JSON.parse(localStorage.getItem('desh-gps')||'null');if(g&&saved==='x'){$('lat').value=g[0].toFixed(3);$('lon').value=g[1].toFixed(3);gpsName=g[2]}}catch(e){}
 calc();
 }
 </script></body></html>
